@@ -3,20 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>QR Scanner</title>
+  <title>QRscan</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap');
 
     :root {
-      --bg: #0a0a0f;
+      --bg:      #0a0a0f;
       --surface: #111118;
-      --border: #1e1e2e;
-      --accent: #00ff88;
+      --border:  #1e1e2e;
+      --accent:  #00ff88;
       --accent2: #00c8ff;
-      --text: #e8e8f0;
-      --muted: #5a5a7a;
-      --error: #ff4466;
+      --text:    #e8e8f0;
+      --muted:   #5a5a7a;
+      --error:   #ff4466;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -32,7 +32,6 @@
       overflow-x: hidden;
     }
 
-    /* Grid background */
     body::before {
       content: '';
       position: fixed;
@@ -45,6 +44,7 @@
       z-index: 0;
     }
 
+    /* ── HEADER ── */
     header {
       width: 100%;
       max-width: 640px;
@@ -53,42 +53,23 @@
       z-index: 1;
     }
 
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
+    .logo { display: flex; align-items: center; gap: 12px; }
 
     .logo-icon {
-      width: 36px;
-      height: 36px;
+      width: 36px; height: 36px;
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
       grid-template-rows: 1fr 1fr 1fr;
       gap: 3px;
     }
-
-    .logo-icon span {
-      background: var(--accent);
-      border-radius: 2px;
-    }
+    .logo-icon span { background: var(--accent); border-radius: 2px; }
     .logo-icon span:nth-child(2),
     .logo-icon span:nth-child(4),
     .logo-icon span:nth-child(6),
-    .logo-icon span:nth-child(8) {
-      background: transparent;
-    }
+    .logo-icon span:nth-child(8) { background: transparent; }
 
-    .logo h1 {
-      font-size: 22px;
-      font-weight: 800;
-      letter-spacing: -0.5px;
-      color: var(--text);
-    }
-
-    .logo h1 span {
-      color: var(--accent);
-    }
+    .logo h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+    .logo h1 span { color: var(--accent); }
 
     .tagline {
       font-family: 'Space Mono', monospace;
@@ -99,19 +80,50 @@
       text-transform: uppercase;
     }
 
+    /* ── MAIN ── */
     main {
       width: 100%;
       max-width: 640px;
-      padding: 16px 24px 40px;
+      padding: 16px 24px 48px;
       position: relative;
       z-index: 1;
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 16px;
     }
 
-    /* Scanner viewport */
-    .scanner-wrapper {
+    /* ── CAMERA SELECT ── */
+    select {
+      width: 100%;
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.2s;
+      appearance: auto;
+    }
+    select:hover, select:focus { border-color: var(--accent); }
+
+    /* ── ERROR ── */
+    #errorMsg {
+      display: none;
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      color: var(--error);
+      background: rgba(255,68,102,0.08);
+      border: 1px solid rgba(255,68,102,0.25);
+      border-radius: 10px;
+      padding: 12px 16px;
+      line-height: 1.6;
+    }
+
+    /* ── SCANNER VIEWPORT ── */
+    .scanner-wrap {
       position: relative;
       width: 100%;
       aspect-ratio: 1;
@@ -122,25 +134,18 @@
     }
 
     #video {
-      width: 100%;
-      height: 100%;
+      width: 100%; height: 100%;
       object-fit: cover;
       display: block;
     }
 
     #canvas { display: none; }
 
-    .scanner-overlay {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-    }
-
     /* Corner brackets */
     .corner {
       position: absolute;
-      width: 48px;
-      height: 48px;
+      width: 44px; height: 44px;
+      pointer-events: none;
     }
     .corner::before, .corner::after {
       content: '';
@@ -148,94 +153,81 @@
       background: var(--accent);
       border-radius: 2px;
     }
-    .corner::before { width: 100%; height: 3px; }
-    .corner::after  { width: 3px; height: 100%; }
+    .corner::before { width: 100%; height: 3px; top: 0; left: 0; }
+    .corner::after  { width: 3px; height: 100%; top: 0; left: 0; }
 
-    .corner.tl { top: 20px; left: 20px; }
-    .corner.tr { top: 20px; right: 20px; transform: scaleX(-1); }
-    .corner.bl { bottom: 20px; left: 20px; transform: scaleY(-1); }
-    .corner.br { bottom: 20px; right: 20px; transform: scale(-1); }
+    .corner.tl { top: 16px; left: 16px; }
+    .corner.tr { top: 16px; right: 16px; transform: scaleX(-1); }
+    .corner.bl { bottom: 16px; left: 16px; transform: scaleY(-1); }
+    .corner.br { bottom: 16px; right: 16px; transform: scale(-1); }
 
     /* Scan line */
-    .scan-line {
+    #scanLine {
       position: absolute;
-      left: 20px; right: 20px;
+      left: 16px; right: 16px;
       height: 2px;
       background: linear-gradient(90deg, transparent, var(--accent), transparent);
-      box-shadow: 0 0 12px var(--accent);
+      box-shadow: 0 0 10px var(--accent);
+      display: none;
       animation: scan 2.4s ease-in-out infinite;
-      opacity: 0;
     }
-
     @keyframes scan {
-      0%   { top: 20px;  opacity: 0; }
-      10%  { opacity: 1; }
-      90%  { opacity: 1; }
-      100% { top: calc(100% - 22px); opacity: 0; }
+      0%   { top: 16px; }
+      100% { top: calc(100% - 18px); }
     }
 
-    .scanner-inactive-msg {
+    /* Idle placeholder */
+    #idleMsg {
       position: absolute;
       inset: 0;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 12px;
+      gap: 14px;
       color: var(--muted);
       font-family: 'Space Mono', monospace;
       font-size: 13px;
     }
 
-    .scanner-inactive-msg svg {
-      opacity: 0.3;
-    }
-
     /* Status badge */
-    .status-badge {
+    #badge {
       position: absolute;
-      bottom: 16px;
+      bottom: 14px;
       left: 50%;
       transform: translateX(-50%);
       font-family: 'Space Mono', monospace;
       font-size: 11px;
-      letter-spacing: 1px;
+      letter-spacing: 1.5px;
       text-transform: uppercase;
-      padding: 5px 14px;
+      padding: 5px 16px;
       border-radius: 100px;
-      background: rgba(0,0,0,0.7);
+      background: rgba(0,0,0,0.65);
       backdrop-filter: blur(8px);
       border: 1px solid var(--border);
       white-space: nowrap;
-      transition: all 0.3s;
+      transition: all 0.25s;
     }
+    #badge.scanning { border-color: var(--accent);  color: var(--accent); }
+    #badge.found    { border-color: var(--accent2); color: var(--accent2); }
 
-    .status-badge.scanning {
-      border-color: var(--accent);
-      color: var(--accent);
+    /* Flash overlay */
+    #flash {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,255,136,0.18);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.05s;
     }
+    #flash.show { opacity: 1; }
 
-    .status-badge.found {
-      border-color: var(--accent2);
-      color: var(--accent2);
-      animation: pulse-badge 0.5s ease;
-    }
-
-    @keyframes pulse-badge {
-      0%   { transform: translateX(-50%) scale(1); }
-      50%  { transform: translateX(-50%) scale(1.1); }
-      100% { transform: translateX(-50%) scale(1); }
-    }
-
-    /* Controls */
-    .controls {
-      display: flex;
-      gap: 12px;
-    }
+    /* ── BUTTONS ── */
+    .controls { display: flex; gap: 12px; }
 
     .btn {
       flex: 1;
-      padding: 14px 20px;
+      padding: 14px 16px;
       border-radius: 12px;
       border: 1px solid var(--border);
       background: var(--surface);
@@ -249,47 +241,31 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
-      letter-spacing: -0.3px;
     }
-
-    .btn:hover {
+    .btn:hover:not(:disabled) {
       border-color: var(--accent);
       color: var(--accent);
       background: rgba(0,255,136,0.05);
     }
-
     .btn.primary {
       background: var(--accent);
       color: #000;
       border-color: var(--accent);
     }
-
-    .btn.primary:hover {
+    .btn.primary:hover:not(:disabled) {
       background: #00ffaa;
       color: #000;
     }
-
-    .btn.danger {
+    .btn.stop {
       border-color: var(--error);
       color: var(--error);
     }
-
-    .btn.danger:hover {
+    .btn.stop:hover:not(:disabled) {
       background: rgba(255,68,102,0.08);
     }
+    .btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
-    .btn:disabled {
-      opacity: 0.35;
-      cursor: not-allowed;
-    }
-
-    /* Results */
-    .results-section {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
+    /* ── RESULTS ── */
     .section-label {
       font-family: 'Space Mono', monospace;
       font-size: 11px;
@@ -298,9 +274,8 @@
       color: var(--muted);
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
     }
-
     .section-label::after {
       content: '';
       flex: 1;
@@ -308,101 +283,9 @@
       background: var(--border);
     }
 
-    .result-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      animation: slide-in 0.3s ease;
-      position: relative;
-      overflow: hidden;
-    }
+    #resultsList { display: flex; flex-direction: column; gap: 10px; }
 
-    .result-card::before {
-      content: '';
-      position: absolute;
-      left: 0; top: 0; bottom: 0;
-      width: 3px;
-      background: var(--accent);
-      border-radius: 3px 0 0 3px;
-    }
-
-    .result-card.url::before { background: var(--accent2); }
-
-    @keyframes slide-in {
-      from { opacity: 0; transform: translateY(-8px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .result-meta {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-    }
-
-    .result-type {
-      font-family: 'Space Mono', monospace;
-      font-size: 10px;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      color: var(--accent);
-      background: rgba(0,255,136,0.1);
-      padding: 3px 8px;
-      border-radius: 4px;
-    }
-
-    .result-type.url { color: var(--accent2); background: rgba(0,200,255,0.1); }
-
-    .result-time {
-      font-family: 'Space Mono', monospace;
-      font-size: 10px;
-      color: var(--muted);
-    }
-
-    .result-text {
-      font-size: 14px;
-      line-height: 1.5;
-      color: var(--text);
-      word-break: break-all;
-    }
-
-    .result-actions {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .result-btn {
-      font-family: 'Space Mono', monospace;
-      font-size: 11px;
-      letter-spacing: 0.5px;
-      padding: 6px 12px;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      background: transparent;
-      color: var(--muted);
-      cursor: pointer;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    .result-btn:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-
-    .result-btn.open:hover {
-      border-color: var(--accent2);
-      color: var(--accent2);
-    }
-
-    .empty-state {
+    .empty {
       padding: 24px;
       text-align: center;
       color: var(--muted);
@@ -412,54 +295,101 @@
       border-radius: 12px;
     }
 
-    .toast {
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      animation: slideIn 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      background: var(--accent);
+    }
+    .card.url::before { background: var(--accent2); }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .card-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .type-badge {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: rgba(0,255,136,0.1);
+      color: var(--accent);
+    }
+    .type-badge.url {
+      background: rgba(0,200,255,0.1);
+      color: var(--accent2);
+    }
+
+    .card-time {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .card-text {
+      font-size: 14px;
+      line-height: 1.55;
+      color: var(--text);
+      word-break: break-all;
+    }
+
+    .card-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .action-btn {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      padding: 5px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .action-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .action-btn.open:hover { border-color: var(--accent2); color: var(--accent2); }
+
+    /* ── TOAST ── */
+    #toast {
       position: fixed;
-      bottom: 24px;
+      bottom: 28px;
       left: 50%;
-      transform: translateX(-50%) translateY(80px);
+      transform: translateX(-50%) translateY(60px);
       background: var(--surface);
       border: 1px solid var(--accent);
       color: var(--accent);
       font-family: 'Space Mono', monospace;
       font-size: 12px;
-      padding: 10px 20px;
+      padding: 9px 20px;
       border-radius: 100px;
       z-index: 999;
       transition: transform 0.3s ease;
       white-space: nowrap;
+      pointer-events: none;
     }
-
-    .toast.show { transform: translateX(-50%) translateY(0); }
-
-    /* Camera selector */
-    .cam-select {
-      font-family: 'Space Mono', monospace;
-      font-size: 12px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 8px 12px;
-      border-radius: 8px;
-      width: 100%;
-      cursor: pointer;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-
-    .cam-select:hover, .cam-select:focus {
-      border-color: var(--accent);
-    }
-
-    .error-msg {
-      font-family: 'Space Mono', monospace;
-      font-size: 12px;
-      color: var(--error);
-      background: rgba(255,68,102,0.08);
-      border: 1px solid rgba(255,68,102,0.2);
-      border-radius: 8px;
-      padding: 10px 14px;
-      text-align: center;
-    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
   </style>
 </head>
 <body>
@@ -480,101 +410,84 @@
 
 <main>
 
-  <!-- Camera selector -->
-  <select class="cam-select" id="camSelect">
-    <option value="">📷 Kamera wird geladen…</option>
+  <select id="camSelect">
+    <option value="">📷 Kamera auswählen…</option>
   </select>
 
-  <div id="errorMsg" class="error-msg" style="display:none;"></div>
+  <div id="errorMsg"></div>
 
-  <!-- Scanner viewport -->
-  <div class="scanner-wrapper">
+  <div class="scanner-wrap">
     <video id="video" autoplay muted playsinline></video>
     <canvas id="canvas"></canvas>
 
-    <div class="scanner-overlay">
-      <div class="corner tl"></div>
-      <div class="corner tr"></div>
-      <div class="corner bl"></div>
-      <div class="corner br"></div>
-      <div class="scan-line" id="scanLine"></div>
-    </div>
+    <div class="corner tl"></div>
+    <div class="corner tr"></div>
+    <div class="corner bl"></div>
+    <div class="corner br"></div>
+    <div id="scanLine"></div>
+    <div id="flash"></div>
 
-    <div class="scanner-inactive-msg" id="inactiveMsg">
-      <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
-        <rect x="4" y="4" width="22" height="22" rx="3" stroke="#5a5a7a" stroke-width="2"/>
-        <rect x="9" y="9" width="12" height="12" rx="1" fill="#5a5a7a"/>
-        <rect x="38" y="4" width="22" height="22" rx="3" stroke="#5a5a7a" stroke-width="2"/>
-        <rect x="43" y="9" width="12" height="12" rx="1" fill="#5a5a7a"/>
-        <rect x="4" y="38" width="22" height="22" rx="3" stroke="#5a5a7a" stroke-width="2"/>
-        <rect x="9" y="43" width="12" height="12" rx="1" fill="#5a5a7a"/>
-        <rect x="38" y="38" width="6" height="6" fill="#5a5a7a"/>
-        <rect x="50" y="38" width="10" height="6" fill="#5a5a7a"/>
-        <rect x="38" y="50" width="10" height="6" fill="#5a5a7a"/>
-        <rect x="54" y="50" width="6" height="6" fill="#5a5a7a" rx="1"/>
+    <div id="idleMsg">
+      <svg width="56" height="56" viewBox="0 0 64 64" fill="none" opacity="0.35">
+        <rect x="4"  y="4"  width="22" height="22" rx="3" stroke="#e8e8f0" stroke-width="2"/>
+        <rect x="9"  y="9"  width="12" height="12" rx="1" fill="#e8e8f0"/>
+        <rect x="38" y="4"  width="22" height="22" rx="3" stroke="#e8e8f0" stroke-width="2"/>
+        <rect x="43" y="9"  width="12" height="12" rx="1" fill="#e8e8f0"/>
+        <rect x="4"  y="38" width="22" height="22" rx="3" stroke="#e8e8f0" stroke-width="2"/>
+        <rect x="9"  y="43" width="12" height="12" rx="1" fill="#e8e8f0"/>
+        <rect x="38" y="38" width="6"  height="6"  fill="#e8e8f0"/>
+        <rect x="50" y="38" width="10" height="6"  fill="#e8e8f0"/>
+        <rect x="38" y="50" width="10" height="6"  fill="#e8e8f0"/>
+        <rect x="54" y="50" width="6"  height="6"  rx="1" fill="#e8e8f0"/>
       </svg>
       Kamera starten
     </div>
 
-    <div class="status-badge" id="statusBadge">bereit</div>
+    <div id="badge">Bereit</div>
   </div>
 
-  <!-- Controls -->
   <div class="controls">
     <button class="btn primary" id="startBtn" onclick="startScanner()">▶ Scannen starten</button>
-    <button class="btn danger" id="stopBtn" onclick="stopScanner()" disabled>■ Stopp</button>
+    <button class="btn stop"    id="stopBtn"  onclick="stopScanner()" disabled>■ Stopp</button>
   </div>
 
-  <!-- Results -->
-  <div class="results-section">
-    <div class="section-label">Scan-Ergebnisse</div>
-    <div id="resultsList">
-      <div class="empty-state">Noch keine QR-Codes gescannt</div>
-    </div>
+  <div class="section-label">Scan-Ergebnisse</div>
+  <div id="resultsList">
+    <div class="empty">Noch keine QR-Codes gescannt</div>
   </div>
 
 </main>
 
-<div class="toast" id="toast"></div>
+<div id="toast"></div>
 
 <script>
-  let stream = null;
-  let scanning = false;
-  let animFrame = null;
-  const video = document.getElementById('video');
-  const canvas = document.getElementById('canvas');
-  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  // ── State ──────────────────────────────────────────────
+  let stream    = null;
+  let scanning  = false;
+  let rafId     = null;
+  let lastCode  = null;
+  let lastTime  = 0;
   const results = [];
-  let lastCode = null;
-  let lastTime = 0;
 
-  // Populate cameras — called AFTER we already have a live stream (permission granted)
-  async function loadCameras(activeStream) {
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    const cams = devices.filter(d => d.kind === 'videoinput');
-    const sel = document.getElementById('camSelect');
-    sel.innerHTML = '';
-    if (cams.length === 0) {
-      sel.innerHTML = '<option>Keine Kamera gefunden</option>';
-      return;
-    }
-    // Find which deviceId is currently active
-    const activeId = activeStream.getVideoTracks()[0]?.getSettings()?.deviceId;
-    cams.forEach((cam, i) => {
-      const opt = document.createElement('option');
-      opt.value = cam.deviceId;
-      opt.textContent = cam.label || `Kamera ${i + 1}`;
-      if (cam.deviceId === activeId) opt.selected = true;
-      sel.appendChild(opt);
-    });
-  }
+  // ── Elements ───────────────────────────────────────────
+  const video     = document.getElementById('video');
+  const canvas    = document.getElementById('canvas');
+  const ctx       = canvas.getContext('2d', { willReadFrequently: true });
+  const camSelect = document.getElementById('camSelect');
+  const errorMsg  = document.getElementById('errorMsg');
+  const idleMsg   = document.getElementById('idleMsg');
+  const scanLine  = document.getElementById('scanLine');
+  const flash     = document.getElementById('flash');
+  const badge     = document.getElementById('badge');
+  const startBtn  = document.getElementById('startBtn');
+  const stopBtn   = document.getElementById('stopBtn');
+  const toast     = document.getElementById('toast');
 
+  // ── Start Scanner ──────────────────────────────────────
   async function startScanner() {
     hideError();
-    const sel = document.getElementById('camSelect');
-    const deviceId = sel.value;
 
-    // Constraints: prefer environment (back) camera; use specific deviceId if already chosen
+    const deviceId = camSelect.value;
     const constraints = {
       video: deviceId
         ? { deviceId: { exact: deviceId } }
@@ -586,111 +499,146 @@
       video.srcObject = stream;
       await video.play();
 
-      // Populate camera list now that we have permission
-      await loadCameras(stream);
+      // Populate camera list now that permission is granted
+      await populateCameras();
 
       scanning = true;
-      document.getElementById('inactiveMsg').style.display = 'none';
-      document.getElementById('scanLine').style.opacity = '1';
-      setStatus('scanning', 'Scannen…');
-      document.getElementById('startBtn').disabled = true;
-      document.getElementById('stopBtn').disabled = false;
+      idleMsg.style.display  = 'none';
+      scanLine.style.display = 'block';
+      startBtn.disabled      = true;
+      stopBtn.disabled       = false;
+      setBadge('scanning', 'Scannen…');
       tick();
+
     } catch (e) {
       if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
-        showError('Kamerazugriff verweigert. Bitte erlaube den Zugriff in deinen Browser-Einstellungen und lade die Seite neu.');
+        showError('Kamerazugriff wurde verweigert.<br>Bitte erlaube den Zugriff in den Browser-Einstellungen und lade die Seite neu.');
       } else if (e.name === 'NotFoundError') {
-        showError('Keine Kamera gefunden. Bitte schließe eine Kamera an.');
+        showError('Keine Kamera gefunden.');
+      } else if (e.name === 'NotReadableError') {
+        showError('Kamera wird bereits von einer anderen App verwendet.');
       } else {
-        showError('Kamera konnte nicht gestartet werden: ' + e.message);
+        showError('Fehler: ' + e.message);
       }
     }
   }
 
+  // ── Stop Scanner ───────────────────────────────────────
   function stopScanner() {
     scanning = false;
-    if (animFrame) cancelAnimationFrame(animFrame);
-    if (stream) stream.getTracks().forEach(t => t.stop());
-    video.srcObject = null;
-    document.getElementById('inactiveMsg').style.display = 'flex';
-    document.getElementById('scanLine').style.opacity = '0';
-    setStatus('', 'bereit');
-    document.getElementById('startBtn').disabled = false;
-    document.getElementById('stopBtn').disabled = true;
-    lastCode = null;
+    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+    if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+    video.srcObject        = null;
+    idleMsg.style.display  = 'flex';
+    scanLine.style.display = 'none';
+    startBtn.disabled      = false;
+    stopBtn.disabled       = true;
+    lastCode               = null;
+    setBadge('', 'Bereit');
   }
 
+  // ── Decode Loop ────────────────────────────────────────
   function tick() {
     if (!scanning) return;
+
     if (video.readyState === video.HAVE_ENOUGH_DATA) {
-      canvas.width = video.videoWidth;
+      canvas.width  = video.videoWidth;
       canvas.height = video.videoHeight;
       ctx.drawImage(video, 0, 0);
+
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const code = jsQR(imageData.data, imageData.width, imageData.height, {
         inversionAttempts: 'dontInvert'
       });
+
       if (code) {
         const now = Date.now();
+        // Debounce: same code only re-triggers after 3 s
         if (code.data !== lastCode || now - lastTime > 3000) {
           lastCode = code.data;
           lastTime = now;
-          onCodeFound(code.data);
+          onFound(code.data);
         }
       }
     }
-    animFrame = requestAnimationFrame(tick);
+
+    rafId = requestAnimationFrame(tick);
   }
 
-  function onCodeFound(text) {
-    setStatus('found', 'Erkannt!');
-    setTimeout(() => scanning && setStatus('scanning', 'Scannen…'), 1200);
+  // ── On Code Found ──────────────────────────────────────
+  function onFound(text) {
+    setBadge('found', 'Erkannt!');
+    setTimeout(() => { if (scanning) setBadge('scanning', 'Scannen…'); }, 1200);
+
+    // Flash
+    flash.classList.add('show');
+    setTimeout(() => flash.classList.remove('show'), 300);
 
     const isURL = /^https?:\/\//i.test(text) || /^www\./i.test(text);
-    const entry = { text, isURL, time: new Date() };
-    results.unshift(entry);
+    results.unshift({ text, isURL, time: new Date() });
     renderResults();
     showToast('✓ QR-Code erkannt');
-
-    // Flash effect
-    const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:absolute;inset:0;background:rgba(0,255,136,0.15);pointer-events:none;z-index:10;animation:fade-flash 0.5s ease forwards;';
-    document.querySelector('.scanner-wrapper').appendChild(overlay);
-    setTimeout(() => overlay.remove(), 600);
   }
 
+  // ── Populate Camera List ───────────────────────────────
+  async function populateCameras() {
+    try {
+      const devices   = await navigator.mediaDevices.enumerateDevices();
+      const cameras   = devices.filter(d => d.kind === 'videoinput');
+      const activeId  = stream?.getVideoTracks()[0]?.getSettings()?.deviceId;
+
+      camSelect.innerHTML = '';
+      cameras.forEach((cam, i) => {
+        const opt      = document.createElement('option');
+        opt.value      = cam.deviceId;
+        opt.textContent = cam.label || `Kamera ${i + 1}`;
+        if (cam.deviceId === activeId) opt.selected = true;
+        camSelect.appendChild(opt);
+      });
+    } catch (_) { /* ignore */ }
+  }
+
+  // ── Camera Switch ──────────────────────────────────────
+  camSelect.addEventListener('change', () => {
+    if (scanning) {
+      stopScanner();
+      startScanner();
+    }
+  });
+
+  // ── Render Results ─────────────────────────────────────
   function renderResults() {
     const list = document.getElementById('resultsList');
     if (results.length === 0) {
-      list.innerHTML = '<div class="empty-state">Noch keine QR-Codes gescannt</div>';
+      list.innerHTML = '<div class="empty">Noch keine QR-Codes gescannt</div>';
       return;
     }
     list.innerHTML = results.map((r, i) => {
-      const typeLabel = r.isURL ? 'URL' : 'Text';
-      const typeClass = r.isURL ? 'url' : '';
-      const t = r.time;
-      const ts = `${t.getHours().toString().padStart(2,'0')}:${t.getMinutes().toString().padStart(2,'0')}:${t.getSeconds().toString().padStart(2,'0')}`;
+      const t  = r.time;
+      const ts = `${pad(t.getHours())}:${pad(t.getMinutes())}:${pad(t.getSeconds())}`;
       return `
-        <div class="result-card ${typeClass}">
-          <div class="result-meta">
-            <span class="result-type ${typeClass}">${typeLabel}</span>
-            <span class="result-time">${ts}</span>
+        <div class="card ${r.isURL ? 'url' : ''}">
+          <div class="card-meta">
+            <span class="type-badge ${r.isURL ? 'url' : ''}">${r.isURL ? 'URL' : 'Text'}</span>
+            <span class="card-time">${ts}</span>
           </div>
-          <div class="result-text">${escHtml(r.text)}</div>
-          <div class="result-actions">
-            <button class="result-btn" onclick="copyText(${i})">⎘ Kopieren</button>
-            ${r.isURL ? `<button class="result-btn open" onclick="openURL(${i})">↗ Öffnen</button>` : ''}
-            <button class="result-btn" onclick="deleteEntry(${i})">✕ Löschen</button>
+          <div class="card-text">${esc(r.text)}</div>
+          <div class="card-actions">
+            <button class="action-btn"            onclick="copyEntry(${i})">⎘ Kopieren</button>
+            ${r.isURL ? `<button class="action-btn open" onclick="openEntry(${i})">↗ Öffnen</button>` : ''}
+            <button class="action-btn"            onclick="deleteEntry(${i})">✕ Löschen</button>
           </div>
         </div>`;
     }).join('');
   }
 
-  function copyText(i) {
-    navigator.clipboard.writeText(results[i].text).then(() => showToast('Kopiert!'));
+  function copyEntry(i) {
+    navigator.clipboard.writeText(results[i].text)
+      .then(() => showToast('Kopiert!'))
+      .catch(() => showToast('Kopieren fehlgeschlagen'));
   }
 
-  function openURL(i) {
+  function openEntry(i) {
     let url = results[i].text;
     if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
     window.open(url, '_blank', 'noopener,noreferrer');
@@ -698,45 +646,39 @@
 
   function deleteEntry(i) {
     results.splice(i, 1);
+    if (lastCode === results[i]?.text) lastCode = null;
     renderResults();
   }
 
-  function setStatus(cls, text) {
-    const badge = document.getElementById('statusBadge');
-    badge.className = 'status-badge ' + cls;
+  // ── Helpers ────────────────────────────────────────────
+  function setBadge(cls, text) {
+    badge.className = cls;
     badge.textContent = text;
   }
 
-  function showError(msg) {
-    const el = document.getElementById('errorMsg');
-    el.textContent = msg;
-    el.style.display = 'block';
+  function showError(html) {
+    errorMsg.innerHTML = html;
+    errorMsg.style.display = 'block';
   }
 
   function hideError() {
-    document.getElementById('errorMsg').style.display = 'none';
+    errorMsg.style.display = 'none';
+    errorMsg.innerHTML = '';
   }
 
-  function escHtml(s) {
-    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  function esc(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
+
+  function pad(n) { return String(n).padStart(2, '0'); }
 
   let toastTimer;
   function showToast(msg) {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.classList.add('show');
+    toast.textContent = msg;
+    toast.classList.add('show');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2000);
   }
-
-  // Add flash keyframe dynamically
-  const style = document.createElement('style');
-  style.textContent = '@keyframes fade-flash { from { opacity:1 } to { opacity:0 } }';
-  document.head.appendChild(style);
-
-  // Camera list is populated after the first permission grant in startScanner()
-  document.getElementById('camSelect').innerHTML = '<option value="">📷 Kamera auswählen…</option>';
 </script>
 </body>
 </html>
